@@ -58,9 +58,6 @@ Throughout this pipleine you will also need to have AFNI and Freesurfer installe
 -  This script will combine all your training dataset and uses %80 of those for training & %20 for testing 
 -  the training and testing dataset are randomly chosen
 -  At last the script will save the classification model, so it can be used for the patient population.
--  trial 1: I got a %84 accuracy when used csf mask (thresholded by 0.5) from fsl segmentation smriprep run-not removing cerebullum
--  trial 2: I got a %83 accuracy when used csf mask (thresholded by 0.5) from freesurfer smriprep run
--  trial 3: I got a %78 accuracy when used csf mask (not-thresholded) from freesurfer smriprep run
 
  
 # Applying the classification model to new dataset

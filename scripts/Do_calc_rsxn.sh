@@ -176,16 +176,9 @@ if [ ! -f rsxn-v3.msk.nii ]; then
 			-1dindex 0 \
 			-1tindex 1 \
 			-dxyz=1 \
-			-savemask rsxn-v2-clust.msk.nii \
+			-savemask rsxn-v2.msk.nii \
 			1.01 1000 \
 			rxsn-v1.mode.msk.nii
-			
-	3dcalc \
-			-a rsxn-v2-clust.msk.nii \
-			-expr 'equals(a,1)' \
-			-prefix rsxn-v3.msk.nii
-
-
 else
 	echo -e "\033[0;35m++ Eroded cluster selection mask already exists ++\033[0m"
 fi
@@ -202,6 +195,16 @@ ynresponse=$(echo $ynresponse | tr '[:upper:]' '[:lower:]')
 
 if [ "$ynresponse" == "y" ]; then
     echo -e "\033[0;35m++ Successfully drived the resection mask, Exiting....++\033[0m"
+	if [ ! -f rsxn.msk.nii ]; then
+		3dcalc \
+		-a brain.msk.nii \
+		-b rsxn-v2.msk.nii \
+		-exp 'iszero(a-b)*b' \
+		-prefix ../rsxn.msk.nii
+	else
+		echo -e "\033[0;35m++ Final resection mask already exists. ++\033[0m"
+	fi
+
 	exit 1
 else
     echo -e "\033[0;35m++ Seems like we need some manual refinements, please follow the insturctions ++\033[0m" 
@@ -218,9 +221,9 @@ if [ ! -f resection-v5.msk.nii ]; then
 	echo ""
 	echo -e "	1. Uncheck the box in the plugin window that reads 'Copy Dataset.'"
 	echo -e "	2. Where it says 'Choose dataset to change directly' select"
-	echo -e "	   rsxn-v3.msk.nii+orig."
+	echo -e "	   rsxn-v2.msk.nii+orig."
 	echo -e "	3. Change the number next to the box that reads 'Value' to 1"
-	echo -e "	4. Set t1_postop.nii as the underlay and rsxn-v3.msk.nii as the overlay."
+	echo -e "	4. Set t1_postop.nii as the underlay and rsxn-v2.msk.nii as the overlay."
 	echo -e "	5. Use the middle button on the mouse to draw cuts in the resection mask"
 	echo -e "	   where it should not be connected and close large holes. Remember to think"
 	echo -e "	   about what this looks like in 3D to ensure the masks now separate masks are"
@@ -233,7 +236,7 @@ if [ ! -f resection-v5.msk.nii ]; then
 	afni -yesplugouts \
 		-com 'SWITCH_UNDERLAY t1_postop.nii' \
 		-com 'OPEN_WINDOW A.plugin.Draw_Dataset' \
-		t1_postop.nii rsxn-v3.msk.nii
+		t1_postop.nii rsxn-v2.msk.nii
 
 	sleep 10 
 	echo -e "\033[0;35m++ Is the resection now correct? (Y/N) ++\033[0m"
@@ -260,11 +263,11 @@ if [ ! -f rsxn-v4.msk.nii ]; then
 			-1dindex 0 \
 			-1tindex 1 \
 			-dxyz=1 \
-			-savemask rsxn-v4-clust.msk.nii \
+			-savemask rsxn-v3-clust.msk.nii \
 			1.01 1000 \
-			rsxn-v3.msk.nii
+			rsxn-v2.msk.nii
 	3dcalc \
-			-a rsxn-v4-clust.msk.nii \
+			-a rsxn-v3-clust.msk.nii \
 			-exp 'equals(a,1)' \
 			-prefix rsxn-v4.msk.nii
 else

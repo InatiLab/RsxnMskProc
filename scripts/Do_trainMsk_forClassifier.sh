@@ -85,30 +85,30 @@ RWM=`@MakeLabelTable -labeltable ${derivative_dir}/aseg_rank.niml.lt -lkeys "Rig
 
 # STEP 1: get GM, WM, CSF, and other mask
 
-#if [ ! -f "gm.msk.nii" ]; then
-#	3dcalc \
-#		-a ${derivative_dir}/aseg_rank_Alnd_Exp.rs.nii \
-#		-prefix gm.msk.nii \
-#		-expr "amongst(a, $LGM, $RGM)"
-#fi
+if [ ! -f "gm.msk.nii" ]; then
+	3dcalc \
+		-a ${derivative_dir}/aseg_rank_Alnd_Exp.rs.nii \
+		-prefix gm.msk.nii \
+		-expr "amongst(a, $LGM, $RGM)"
+fi
 
 #--------------------
 
-#if [ ! -f "wm.msk.nii" ]; then
-#	3dcalc \
-#		-a ${derivative_dir}/aseg_rank_Alnd_Exp.rs.nii \
-#		-prefix wm.msk.nii \
-#		-expr "amongst(a, $LWM, $RWM)"
-#fi
+if [ ! -f "wm.msk.nii" ]; then
+	3dcalc \
+		-a ${derivative_dir}/aseg_rank_Alnd_Exp.rs.nii \
+		-prefix wm.msk.nii \
+		-expr "amongst(a, $LWM, $RWM)"
+fi
 
 #--------------------
 
-#if [ ! -f "csf.msk.nii" ]; then
-#	3dcalc \
-#		-a ${derivative_dir}/*label-CSF_probseg.nii \
-#		-prefix csf.msk.nii \
-#		-expr 'step(a-0.5)'
-#fi
+if [ ! -f "csf.msk.nii" ]; then
+	3dcalc \
+		-a ${derivative_dir}/*label-CSF_probseg.nii \
+		-prefix csf.msk.nii \
+		-expr 'step(a-0.5)'
+fi
 
 #====================================================================================================================
 
@@ -153,9 +153,11 @@ fi
 #---------------------------------------------------------------------------
 #STEP 4: generate a brain mask
 if [ ! -f "all.msk.nii" ]; then
-	3dAutomask \
+	3dcalc  \
+		-a labels.msk.nii \
 		-prefix all.msk.nii \
-		labels.msk.nii
+		-expr 'step(a)'
+		
 fi
 #====================================================================================================================
 

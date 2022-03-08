@@ -16,9 +16,9 @@ RsxnMskProc
       -classifier
       -Training
 
-To begin processing you will need to first place your preoperative mprage of your healthy voluneers under data/${subj}/orig/ as mprage.nii, and once you have the classifier model trained, you can import both pre and post operative mprage images of your patients as mprage.nii & mprage_postop.nii under orig directory.
+To begin processing you will need to first place your preoperative mprage of your healthy voluneers under data/${subj}/orig/ as mprage.nii, and once you have the classifier model trained, you can import both pre and post operative mprage images of your patients as mprage.nii & mprage_postop.nii under orig directory. You also have to make sure that you have installed docker on your system so your bash can find it with proper path.
 
-Note: Before starting this pipeline, please create a conda environment with python version 3.7, you can achieve that by running the following commandline 'conda create -n p3.7 python=3.7'. once you have your conda environment setup, you will need to install JEM package by running 'pip install jem nibabel smriprep-docker'
+Note: Before starting this pipeline, please create a conda environment with python version 3.7, you can achieve that by running the following commandline 'conda create -n p3.7 python=3.7'. once you have your conda environment setup, you will need to install JEM package by running 'pip install jem nibabel smriprep smriprep-docker'
 Throughout this pipleine you will also need to have AFNI and Freesurfer installed. please check out the the following links to install these software packages: 
 (https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/background_install/install_instructs/index.html)
 (https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)

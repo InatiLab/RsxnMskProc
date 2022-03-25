@@ -131,7 +131,9 @@ fi
 if [ ! -f "SurfVol_Alnd_Exp+orig.HEAD" ]; then
 	@SUMA_AlignToExperiment \
 		-exp_anat t1+orig \
-		-surf_anat SurfVol.nii
+		-surf_anat SurfVol.nii \
+		-wd \
+		-align_centers 
 fi
 #====================================================================================================================
 

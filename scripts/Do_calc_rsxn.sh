@@ -84,7 +84,7 @@ fi
  
 # STEP 2: use AFNI skull strip algorithm to create brain mask
 
-if [ ! -f t1.msk.d5.nii ]; then
+if [ ! -f t1.msk.d1.nii ]; then
 	if [ ! -f t1.afni.ss.nii ]; then
 		echo -e "\033[0;35m++ Skull stripping preop scan via afni ++\033[0m"
 		3dSkullStrip -overwrite \
@@ -102,8 +102,8 @@ if [ ! -f t1.msk.d5.nii ]; then
 
 	3dmask_tool \
 			-input t1.msk.nii \
-			-prefix t1.msk.d5.nii \
-			-dilate_input 5
+			-prefix t1.msk.d1.nii \
+			-dilate_input 1
 else
 	echo -e "\033[0;35m++ Preop skull strip afni mask has already been created ++\033[0m"
 fi

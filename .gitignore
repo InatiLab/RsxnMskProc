@@ -1,2 +1,8 @@
-# ignore DS_STORE
+# ignore history files
 .DS_Store
+.Rhistory
+
+# ignore private directories
+data/*
+notebooks/*
+archive/*

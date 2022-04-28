@@ -1,1 +1,2 @@
-data/*
+# ignore DS_STORE
+.DS_Store

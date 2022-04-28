@@ -131,7 +131,9 @@ fi
 if [ ! -f "SurfVol_Alnd_Exp+orig.HEAD" ]; then
 	@SUMA_AlignToExperiment \
 		-exp_anat t1+orig \
-		-surf_anat SurfVol.nii
+		-surf_anat SurfVol.nii \
+		-wd \
+		-align_centers 
 fi
 #====================================================================================================================
 
@@ -157,11 +159,7 @@ fi
 
 #====================================================================================================================
 #STEP 6: Generate original features fro T1w 
-source activate base
-
 if [ -f "t1.nii" ] && [ ! -f "t1_features.nii" ]; then
 	echo -e "\033[0;35m++ Calculating original features for t1... ++\033[0m"
 	compute_features --num_scales 3 --output t1_features.nii  t1.nii 			
 fi
-conda deactivate
-

@@ -1,5 +1,5 @@
 # ignore history files
-.DS_Store
+**/.DS_Store
 .Rhistory
 
 # ignore private directories

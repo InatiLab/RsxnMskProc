@@ -8,7 +8,7 @@ set -e
 
 # Author:       Kate Dembny 
 # Date:         12/19/19
-# Updated:      10/01/2020 SA
+# Updated:      10/01/2020 SA; 4/6/2022 EH; 4/21/22 EH (added new steps 8/9)
 
 # Syntax:       ./Do_calc_rsxn.sh $SUBJ
 # Arguments:    SUBJ: subject p-number
@@ -116,7 +116,7 @@ if [ ! -f brain.msk.nii ]; then
 	echo -e "\033[0;35m++ Creating preop brain mask ++\033[0m"
 	3dcalc \
 			-a ${clf_dir}/y_class.nii \
-			-b t1.msk.d5.nii \
+			-b t1.msk.nii \
 			-exp 'amongst(a,3,4)*b' \
 			-prefix brain.msk.nii
 else
@@ -127,7 +127,7 @@ if [ ! -f brain_postop.msk.nii ]; then
 	echo -e "\033[0;35m++ Creating postop brain mask ++\033[0m"
 	3dcalc \
 			-a ${clf_dir}/postop/y_class_al.nii \
-			-b t1.msk.d5.nii \
+			-b t1.msk.nii \
 			-exp 'amongst(a,3,4)*b' \
 			-prefix brain_postop.msk.nii
 else
@@ -166,35 +166,92 @@ if [ ! -f rsxn-v3.msk.nii ]; then
 	3dLocalstat \
 		-stat 'mode' \
 		-nbhd 'SPHERE(-1.8)' \
-		-prefix rxsn-v1.mode.msk.nii \
+		-prefix rsxn-v1.mode.msk.nii \
 		rsxn-v1.msk.nii 
-
-	3dclust \
-			-1Dformat \
-			-overwrite \
-			-nosum \
-			-1dindex 0 \
-			-1tindex 1 \
-			-dxyz=1 \
-			-savemask rsxn-v2.msk.nii \
-			1.01 1000 \
-			rxsn-v1.mode.msk.nii
 else
 	echo -e "\033[0;35m++ Eroded cluster selection mask already exists ++\033[0m"
 fi
 
 #--------------------------------------------------------------------------------------------------------------------
 
-# STEP 8: Checking out the computationally driven resection mask, and manually refined if it needs it
-afni 
-sleep 10
+# STEP 8: Collect cluster volumes and set minimum volume variables
+
+3dclust -1dindex 0 -1tindex 1 -dxyz=1 1.01 1000 rsxn-v1.mode.msk.nii > temp.1D
+
+#Run the python code to get the necessary volumes
+PYTHON_CODE=$(cat <<END
+
+import pandas as pd
+
+temp_df = pd.read_csv('temp.1D', comment='#', header=None, delim_whitespace=True)
+vols = (temp_df[0]-1)
+vols.to_csv('vols.out',header=None, index=False)
+
+END
+)
+
+python -c "$PYTHON_CODE"
+declare -a vol_array
+for a in $(cat vols.out); do
+	vol_array+=("$a")
+done
+
+#--------------------------------------------------------------------------------------------------------------------
+
+# STEP 9: Select the correct cluster and mask anything that you do not want to use
+cd $wdir
+(( passnum=0 ))
+for a in "${vol_array[@]}"; do
+    (( last_passnum=passnum ))
+    (( passnum=passnum+1 ))
+    3dclust -1dindex 0 -1tindex 1 -savemask rsxn-msk-$passnum.nii -dxyz=1 1.01 $a rsxn-v1.mode.msk.nii 
+	if (( passnum == 1 )); then
+		mv rsxn-msk-$passnum.nii rsxn-msk-$passnum-masked.nii
+		afni  -com "SWITCH_UNDERLAY t1_postop.nii" -com "SWITCH_OVERLAY rsxn-msk-$passnum-masked.nii"
+		sleep 5
+		echo -e "\033[0;35m++ Is this the correct cluster? (Y/N) ++\033[0m"
+    	read -r ynresponse
+		if [ "$ynresponse" == "Y" ]; then
+			mv rsxn-msk-$passnum-masked.nii rsxn-v2.msk.nii
+			echo -e "\033[0;35m++ Cluster has been selected. Further refining mask... ++\033[0m"
+			break
+		fi
+	else
+		3dcalc \
+			-a rsxn-msk-$passnum.nii \
+			-b rsxn-msk-$last_passnum-masked.nii \
+			-expr 'isnegative(b-a)' \
+			-prefix rsxn-msk-$passnum-masked.nii
+		afni  -com "SWITCH_UNDERLAY t1.nii" -com "SWITCH_OVERLAY rsxn-msk-$passnum-masked.nii"
+		sleep 5
+    	echo -e "\033[0;35m++ Is this the correct cluster? (Y/N) ++\033[0m"
+    	read -r ynresponse	
+		if [ "$ynresponse" == "Y" ]; then
+			mv rsxn-msk-$passnum-masked.nii rsxn-v2.msk.nii
+			echo -e "\033[0;35m++ Cluster has been selected. Further refining mask... ++\033[0m"
+			break
+		fi
+		if [ "$ynresponse" == "N" ]; then
+			if (( $a == ${vol_array[${#vol_array[@]}-1]} )); then
+				echo -e "\033[0;35m++ No more possible clusters. Check quality of downloaded scans. ++\033[0m"
+				exit 1
+			fi
+		fi
+	fi
+done
+
+#--------------------------------------------------------------------------------------------------------------------
+
+# STEP 10: Checking out the computationally driven resection mask, and manually refined if it needs it
+afni -com "SWITCH_UNDERLAY t1.nii" -com "SWITCH_OVERLAY rsxn-v2.msk.nii"
+sleep 5
 echo -e "\033[0;35m++ Does the computationally driven resection mask suffice your requirement? (Y/N) ++\033[0m"
 read ynresponse
 
 ynresponse=$(echo $ynresponse | tr '[:upper:]' '[:lower:]')
 
-if [ "$ynresponse" == "y" ]; then
-    echo -e "\033[0;35m++ Successfully drived the resection mask, Exiting....++\033[0m"
+if [ "$ynresponse" == "y" ] || [ "$ynresponse" == "Y" ]; then
+    echo -e "\033[0;35m++ Successfully derived the resection mask. Exiting....++\033[0m"
 	if [ ! -f rsxn.msk.nii ]; then
 		3dcalc \
 		-a brain.msk.nii \
@@ -207,11 +264,11 @@ if [ "$ynresponse" == "y" ]; then
 
 	exit 1
 else
-    echo -e "\033[0;35m++ Seems like we need some manual refinements, please follow the insturctions ++\033[0m" 
+    echo -e "\033[0;35m++ Seems like we need some manual refinements. Please follow the instrutions. ++\033[0m" 
 fi  
 #-------------------------------------------------------------------------------------------------------------------------
 
-# STEP 9: Dilate and erode around 1 resection mask to remove misalignment errors, and then check resection mask for erroneously included ventricles, etc edit if incorrect with Draw Dataset plugin
+# STEP 11: Dilate and erode around 1 resection mask to remove misalignment errors, and then check resection mask for erroneously included ventricles, etc edit if incorrect with Draw Dataset plugin
 
 if [ ! -f resection-v5.msk.nii ]; then
 	echo -e "\033[0;35mYou are about to have the chance to edit the mask for any errors that"
@@ -238,12 +295,12 @@ if [ ! -f resection-v5.msk.nii ]; then
 		-com 'OPEN_WINDOW A.plugin.Draw_Dataset' \
 		t1_postop.nii rsxn-v2.msk.nii
 
-	sleep 10 
+	sleep 5 
 	echo -e "\033[0;35m++ Is the resection now correct? (Y/N) ++\033[0m"
 	read ynresponse
 
-	if [ "$ynresponse" == "Y" ]; then
-		echo "Continuing"
+	if [ "$ynresponse" == "y" ] || [ "$ynresponse" == "Y" ]; then
+		echo -e "\033[0;35m++ Continuing... ++\033[0m"
 	else
 		echo -e "\033[0;35m++ Resection mask has been marked as not correct. Exiting... ++\033[0m"
 		exit 1
@@ -254,9 +311,9 @@ else
 fi
 #--------------------------------------------------------------------------------------------------------------------
 
-# STEP10: Run clustering and select largest cluster to be part of mask
+# STEP 12: Run clustering and select largest cluster to be part of mask
 if [ ! -f rsxn-v4.msk.nii ]; then
-	echo -e "\033[0;35m++ Creating cluster resection mask ++\033[0m"
+	echo -e "\033[0;35m++ Creating cluster resection mask... ++\033[0m"
 	3dclust \
 			-1Dformat \
 			-nosum \
@@ -275,7 +332,7 @@ else
 fi
 #--------------------------------------------------------------------------------------------------------------------
 
-# STEP11: Final check up incase the manual correction exceeded the actual brain
+# STEP 13: Final check up incase the manual correction exceeded the actual brain
 
 if [ ! -f rsxn.msk.nii ]; then
 
@@ -289,7 +346,7 @@ else
 fi
 
 #--------------------------------------------------------------------------------------------------------------------
-# STEP12: Check the final mask
+# STEP 14: Check the final mask
 
 if [[ ! -f "${data_dir}/${subj}/rsxn.msk.nii" ]]; then
 	afni -yesplugouts \
@@ -297,11 +354,11 @@ if [[ ! -f "${data_dir}/${subj}/rsxn.msk.nii" ]]; then
 		-com 'OPEN_WINDOW A.plugin.Draw_Dataset' \
 		t1_postop.nii rsxn.msk.nii
 
-	sleep 10 
+	sleep 5
 	echo -e "\033[0;35m++ Is the final resection mask correct? (Y/N) ++\033[0m"
 	read ynresponse
 
-	if [ "$ynresponse" == "Y" ]; then
+	if [ "$ynresponse" == "y" ] || [ "$ynresponse" == "Y" ]; then
 		echo "Continuing"
 		mv rsxn.msk.nii ${data_dir}/${subj}/rsxn_msk/.
 	else

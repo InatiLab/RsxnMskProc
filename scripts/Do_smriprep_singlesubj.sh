@@ -38,7 +38,7 @@ else
     participant \
     --participant-label $subj \
     --n_cpus $cpus \
-    --fs-license-file /Applications/freesurfer/7.1.1/license.txt  \
+    --fs-license-file /usr/local/freesurfer/license.txt  \
     --fs-no-reconall \
     --output-spaces anat fsnative \
     --write-graph \

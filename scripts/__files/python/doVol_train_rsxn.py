@@ -109,9 +109,11 @@ for subj in subjects:
 	y.append(yy)
 
 X_all = np.vstack(X)
+
 y_all = np.ravel(np.vstack(y))
 
 X_train, X_test, y_train, y_test = train_test_split(X_all, y_all, test_size=0.2)
+
 #====================================================================================================================
 
 # STEP 2: standardize data
@@ -125,7 +127,7 @@ joblib.dump(stdsc, data_dir+'/classifier/stdsc')
 
 # STEP 3: classify
 
-clf = LogisticRegression(solver='saga', penalty='l2', C=0.0001, multi_class='multinomial', class_weight=None)
+clf = LogisticRegression(solver='saga', penalty='l2', C=0.01, multi_class='multinomial', class_weight=None)
 clf.fit(X_train_std, y_train)
 accuracy = clf.score(X_test_std, y_test)
 

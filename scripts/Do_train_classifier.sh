@@ -70,19 +70,34 @@ rsxn_dir=${data_dir}/Training/derivatives/smriprep/
 #====================================================================================================================
 # BEGIN SCRIPT
 #====================================================================================================================
+#STEP 1: get the training subject length 
 
-# STEP 1: run training script (no correction)
-
-if [ ! -f "${data_dir}/classifier/clf" ]; then
-	python3 ${scripts_dir}/__files/python/doVol_train_rsxn.py ${rsxn_dir} ${subj_arr[@]}
+if [[ ${#subj_arr[@]} == 5 ]]; then
+	clf_suffix='_5subj'
+elif [[ ${#subj_arr[@]} == 4 ]]; then
+	clf_suffix='_4subj'
+elif [[ ${#subj_arr[@]} == 3 ]]; then
+	clf_suffix='_3subj'
+elif [[ ${#subj_arr[@]} == 2 ]]; then
+	clf_suffix='_2subj'
+elif [[ ${#subj_arr[@]} == 1 ]]; then
+	clf_suffix='_1subj'
 fi
+
 #====================================================================================================================
 
-# STEP 2: write out subjects file
+# STEP 2: run training script (no correction)
 
-if [ -f "${data_dir}/classifier/clf_info" ]; then
-	if [ ! -f "${data_dir}/classifier/subjects" ]; then
-			echo -e "${subj_arr[@]}" > ${data_dir}/classifier/subjects
+if [ ! -f "${data_dir}/classifier${clf_suffix}/clf" ]; then
+	python3 ${scripts_dir}/__files/python/doVol_train_rsxn_1feat.py ${rsxn_dir} ${subj_arr[@]}
+fi
+
+#===============================================================================================
+# STEP 3: write out subjects file
+
+if [ -f "${data_dir}/classifier${clf_suffix}/clf_info" ]; then
+	if [ ! -f "${data_dir}/classifier${clf_suffix}/subjects" ]; then
+			echo -e "${subj_arr[@]}" > ${data_dir}/classifier${clf_suffix}/subjects
 	fi
 fi
 	#====================================================================================================================

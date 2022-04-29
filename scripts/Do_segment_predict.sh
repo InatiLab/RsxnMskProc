@@ -44,7 +44,8 @@ subj="$1"
 scripts_dir=`pwd`
 proj_dir=${scripts_dir%/*}
 data_dir=${proj_dir}/data
-reg_dir=${data_dir}/${subj}/reg
+segment_dir=${data_dir}/
+reg_dir=${segment_dir}/${subj}/reg
 
 #------------------------------------------------------
 #postop flag		
@@ -57,8 +58,8 @@ else
 	my_t1='t1.nii'
 fi
 
-feat_dir="${data_dir}/${subj}/features${postop_subdir}"
-clf_dir="${data_dir}/${subj}/clf${postop_subdir}"
+feat_dir="${segment_dir}/${subj}/features${postop_subdir}"
+clf_dir="${segment_dir}/${subj}/clf${postop_subdir}"
 #--------------------------------------------------------
 # DATA CHECK
 
@@ -87,6 +88,7 @@ fi
 # STEP 1: Generate features
 
 source activate base
+
 cd ${feat_dir}
 
 my_out="t1_features.nii"
@@ -99,9 +101,6 @@ if [ -f "${reg_dir}/$my_inp" ] && [ ! -f "$my_out" ]; then
 	echo -e "\033[0;35m++ Calculating original features for $img... ++\033[0m"
 	compute_features --num_scales 3  --output $my_out $reg_dir/$my_inp 			
 fi
-
-
-
 
 #====================================================================================================================
 # STEP 2: Predict Brain Classes

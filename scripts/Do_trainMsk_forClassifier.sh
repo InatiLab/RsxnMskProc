@@ -105,7 +105,7 @@ fi
 
 if [ ! -f "csf.msk.nii" ]; then
 	3dcalc \
-		-a ${derivative_dir}/*label-CSF_probseg.nii \
+		-a ${derivative_dir}/*label-CSF_probseg.nii.gz \
 		-prefix csf.msk.nii \
 		-expr 'step(a-0.5)'
 fi

@@ -74,7 +74,7 @@ if [ ! -f "t1_postop.rs.nii" ]; then
         -giant_move \
         -cost nmi \
         -suffix _lin_al  
-    conda deactivate
+    
 
     3dAllineate  \
         -master t1.nii \
